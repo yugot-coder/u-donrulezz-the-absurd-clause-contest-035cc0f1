@@ -27,10 +27,20 @@ def check_gate():
 
 
 def verify_written_bytes(path):
-    """Read the file back and compare it byte-for-byte with TEXT."""
+    """Read the file back and compare it byte-for-byte with TEXT.
+
+    The comparison is done on the SHA-256 digest of the landed bytes and
+    raises SystemExit on mismatch, so the check also holds under
+    `python -O` (where plain asserts are stripped).
+    """
+    import hashlib
+
     with open(path, "rb") as fh:
         data = fh.read()
-    assert data == TEXT.encode("utf-8"), "written bytes differ from TEXT"
+    landed = hashlib.sha256(data).hexdigest()
+    expected = hashlib.sha256(TEXT.encode("utf-8")).hexdigest()
+    if landed != expected:
+        raise SystemExit("read-back verification failed: entry.txt digest mismatch")
     return data
 
 
